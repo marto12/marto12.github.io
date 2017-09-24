@@ -1,0 +1,83 @@
+---
+title: "Covariate Creation"
+output:
+  html_notebook:
+    number_sections: yes
+    toc: yes
+  html_document: default
+  pdf_document: default
+---
+#Covariates
+
+Covariates are the same as features, x variables. 
+
+
+# Head
+```{r, message=FALSE, warning=FALSE}
+#clear
+rm(list=ls())
+#packages
+library(caret)
+library(ISLR)
+library(dplyr)
+library(splines)
+
+```
+# Data
+```{r}
+data(Wage) 
+colnames(Wage)
+```
+## Training and testing
+```{r}
+inTrain <- createDataPartition(y=Wage$wage,list = FALSE,p = .75)
+training <- Wage[inTrain,]
+testing <- Wage[-inTrain,]
+```
+
+# Covariates tidying and adding
+Tidy covariates = making covariates from existing covariates. Needed more for regression and svms, less so for classification trees. 
+
+Should only be done on the training set. 
+
+## Create dummies from categoricals
+```{r}
+table(training$jobclass)
+dummies <- dummyVars(wage ~ jobclass,data=training,fullRank = TRUE)
+predict(dummies,newdata=training) %>% head
+```
+
+## Remove covariates with little variation
+
+```{r}
+nearZeroVar(training,saveMetrics = TRUE)
+training2 <- training[,!nsv$nzv]
+nearZeroVar(training2,saveMetrics = TRUE)
+
+```
+
+## Spline basis
+
+For fitting curvey lines to data. BS function creates a 3rd degree polynomial. Columns represent x, x^2, x^3. 
+
+```{r}
+bsBasis <- bs(training$age,df=3)
+
+lm1 <- lm(wage ~ bsBasis,data=training)
+plot(training$age,training$wage,pch=19,cex=0.5)
+points(training$age,predict(lm1,newdata=training),col="red",pch=19,cex=0.5)
+
+```
+Level 1 - Raw data to covariates
+Level 2 - Covariates to covariates
+ 
+
+
+
+
+
+
+
+
+
+

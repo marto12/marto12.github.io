@@ -1,0 +1,124 @@
+---
+title: "Spam"
+output:
+  html_notebook:
+    number_sections: yes
+    toc: yes
+  html_document: default
+  pdf_document: default
+---
+Basic preprocessing
+
+# Head
+```{r, message=FALSE, warning=FALSE}
+#clear
+rm(list=ls())
+#packages
+library(caret)
+library(kernlab)
+library(ggplot2)
+library(reshape2)
+```
+# Data
+```{r}
+data(spam)
+head(spam)
+summary(spam)
+```
+
+```{r}
+# training and testing
+inTrain <- createDataPartition(y=spam$type,list = FALSE,p = .75)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+```
+
+# Preprocessing
+## Average capitals per line
+Some data is very skewed so may want to preprocess
+```{r}
+hist(x = training$capitalAve)
+mean(training$capitalAve)
+sd(training$capitalAve)
+```
+```{r}
+#spam.chart <- spam[,1:5]
+#head(spam.chart)
+#spam.chart <- melt(spam.chart)
+#ggplot(aes(x=value, colour=variable), data=spam.chart) + geom_density()
+
+```
+
+Standard deviation is huge compared to mean, so let's standardise.
+
+# Standardising
+```{r}
+trainCapAve <- training$capitalAve
+trainCapAveS <- (trainCapAve-mean(trainCapAve))/sd(trainCapAve) # s for standardised
+mean(trainCapAveS) # mean should be zero
+sd(trainCapAveS) # sd should be 1
+# qplot(trainCapAveS, geom = "density")
+
+```
+For test set, you have to standardise by the mean and sd of the training set. 
+So this would look like the following. This means that the mean will not be zero and the sd not 1. 
+```{r}
+testCapAve <- testing$capitalAve
+testCapAveS <- (testCapAve-mean(trainCapAve))/sd(trainCapAve) # s for standardised
+mean(testCapAveS) # mean should be zero
+sd(testCapAveS) # sd should be 1
+```
+Can also use the preprocess function from the caret package to standardise in the same way. 
+```{r}
+preObj <- preProcess(training[,-58],method=c("center","scale")) # you can use this object to apply to the testing set
+trainCapAveS <- predict(preObj, training[,-58])$capitalAve
+mean(trainCapAveS)
+testingCapAveS <- predict(preObj, testing[,-58])$capitalAve
+mean(testingCapAveS)
+```
+You can also do this in one step using the train function. 
+```{r}
+set.seed(1234)
+modelFit <- train(type ~ ., data = training, method = "glm", preProcess=c("center","scale"))
+modelFit
+```
+Other transforms include the Box-Cox transformation. Uses maximum liklihood. Tries to make things look like a normal distribution. 
+
+```{r}
+preObj <- preProcess(training[,-58],method=c("BoxCox")) 
+trainCapAveS <- predict(preObj, training[,-58])$capitalAve
+par(mfrow=c(1,2))
+hist(trainCapAveS)
+qqnorm(trainCapAveS)
+
+```
+
+### Quick check
+Pic on the right should be a continous straight line. 
+
+```{r}
+set.seed(1234)
+test <- rnorm(n=1000,mean=0, sd=1)
+par(mfrow=c(1,2))
+hist(test)
+qqnorm(test)
+
+```
+## Imputing data
+You can also impute data with k nearest neighbours imputation. This takes the k (eg.10) nearest neighbours and averages those for imputation. 
+```{r}
+set.seed(1234)
+#make some values NA
+training$capAve <- training$capitalAve
+selectNA <- rbinom(dim(training)[1],size=1,prob=0.05)==1
+training$capAve[selectNA] <- NA
+#Impute and standardise
+preObj <- preProcess(training[,-58],method="knnImpute")
+capAve <- predict(preObj,training[,-58])$capAve
+#Standardise true values
+capAveTruth <- training$capitalAve
+capAveTruth <- (capAveTruth-mean(capAveTruth))/sd(capAveTruth)
+quantile((capAve-capAveTruth)[selectNA])
+```
+
+

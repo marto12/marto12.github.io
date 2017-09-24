@@ -1,0 +1,84 @@
+---
+title: "Predicting with regression"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+---
+#Predicting with regression
+
+# Head
+```{r, message=FALSE, warning=FALSE}
+#clear
+rm(list=ls())
+#packages
+library(caret)
+library(dplyr)
+library(ggplot2)
+```
+
+# Data
+```{r}
+data(faithful) 
+```
+
+## Training and testing data sets
+```{r}
+set.seed(333)
+inTrain <- createDataPartition(y=faithful$waiting,list = FALSE,p = .5) 
+trainFaith <- faithful[inTrain,]
+testFaith <- faithful[-inTrain,]
+```
+
+# Plotting
+```{r}
+plot(trainFaith$waiting, trainFaith$eruptions, pch=19, col="blue")
+```
+
+# Train model
+```{r}
+lm1 <- lm(formula = eruptions~waiting, data=trainFaith)
+plot(trainFaith$waiting, trainFaith$eruptions, pch=19, col="blue", xlab="Waiting",ylab="Duration")
+lines(trainFaith$waiting,lm1$fitted)
+summary(lm1)
+```
+
+# Assess model
+```{r}
+plot(lm1, pch=19)
+
+```
+
+# Predict on training data
+
+```{r}
+newdata <- data.frame(waiting=80) # create new data frame with value of 80
+predict(lm1,newdata)
+
+```
+
+# Train and test
+```{r}
+par(mfrow=c(1,2))
+plot(trainFaith$waiting, trainFaith$eruptions, pch=19, col="blue", xlab="Waiting",ylab="Duration")
+lines(trainFaith$waiting,predict(lm1))
+plot(testFaith$waiting, testFaith$eruptions, pch=19, col="blue", xlab="Waiting",ylab="Duration")
+lines(testFaith$waiting,predict(lm1,newdata=testFaith))
+```
+
+## Get training and test set errors
+```{r}
+#training
+sqrt(sum((lm1$fitted.values-trainFaith$eruptions)^2))
+#test
+sqrt(sum(((predict(lm1, newdata=testFaith))-testFaith$eruptions)^2))
+
+```
+
+# Same process in caret
+```{r}
+modFit <- train(eruptions ~ waiting, method="lm",data=trainFaith)
+summary(modFit$finalModel)
+
+```
+
