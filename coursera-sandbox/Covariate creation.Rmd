@@ -1,10 +1,10 @@
 ---
 title: "Covariate Creation"
 output:
+  html_document: default
   html_notebook:
     number_sections: yes
     toc: yes
-  html_document: default
   pdf_document: default
 ---
 #Covariates

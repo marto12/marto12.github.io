@@ -1,0 +1,74 @@
+---
+title: "Predicting with multiple regression"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+---
+#Predicting with multiple regression
+
+# Library
+```{r}
+rm(list=ls())
+library(ISLR)
+library(ggplot2)
+library(caret)
+library(dplyr)
+```
+
+# Data
+```{r}
+data(Wage)
+Wage <- subset(Wage, select = -c(logwage)) # remove y var
+colnames(Wage)
+dim(Wage)
+```
+
+# Train and test sets
+```{r}
+inTrain <- createDataPartition(y=Wage$wage, p=0.7, list=FALSE)
+training <- Wage[inTrain,]
+testing <- Wage[-inTrain,]
+dim(training)[1]+dim(testing)[1]
+```
+
+
+# Feature Plot
+```{r}
+featurePlot(x=training[,c("age","education","jobclass")],y=training$wage, plot="pairs")
+
+```
+# Individual plots
+```{r}
+qplot(age, wage, data=training,colour=education)
+```
+# Fit a linear model 
+```{r}
+#training$education <- as.factor(training$education)
+
+modFit <- train(wage ~ age + jobclass + education,
+                method="lm",
+                data=training)
+finMod <- modFit$finalModel
+print(modFit)
+
+```
+# Diagnostics
+```{r}
+plot(finMod,pch=19,cex=0.5)
+```
+
+```{r}
+qplot(finMod$fitted.values,finMod$residuals,data=training,colour=race)
+```
+
+# Plot against index of dataset
+```{r}
+plot(finMod$residuals,pch=19)
+```
+# Post mortmen on your analysis
+```{r}
+pred <- predict(modFit, testing)
+qplot(wage, pred, colour=year,data=testing)
+```
+

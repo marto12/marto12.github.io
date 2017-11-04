@@ -1,0 +1,8 @@
+name: Publish Document
+title:
+account: rpubs
+server: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/311100/6dff5a0012b146dcb70ae6570ba0f1bc
+bundleId: https://api.rpubs.com/api/v1/document/311100/6dff5a0012b146dcb70ae6570ba0f1bc
+url: http://rpubs.com/marto12/311100
+when: 1506237063.96038
